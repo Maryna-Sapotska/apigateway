@@ -1,63 +1,42 @@
-# Auth Service
+# Gateway Service
 
-JWT-based authentication service built with Spring Boot, Spring Security, PostgreSQL, and Liquibase.
-Supports registration, login, refresh token flow, and token validation.
+A gateway service responsible for user registration and coordination between auth-service and user-service.
 
 ## Tech Stack
 
 - Java 21
-- Spring Boot 3
-- Spring Data JPA
-- PostgreSQL
+- Spring Boot 3 (WebFlux)
+- Spring Security
+- Spring WebClient
+- Project Reactor
 - JSON Web Token (JJWT)
-- Liquibase
 - Docker
 - Docker Compose
-- JUnit 5
 - Maven
 
 ---
 
 ## Features
-- User registration
-- Login with JWT generation
-- Access & Refresh tokens
-- Token validation via JWT filter
-- Role-based authentication (ROLE_USER, ROLE_ADMIN)
-- Password encryption with BCrypt
-- Database migrations via Liquibase
-- PostgreSQL running in Docker
-
+- Distributed user registration across services
+- Integration with auth-service and user-service
+- JWT-based authentication flow
+- Reactive non-blocking pipeline (WebFlux + Mono)
+- Centralized error handling via onStatus
+- Rollback mechanism for consistency
+- Email conflict detection (409 CONFLICT handling)
+- JWT parsing and userId extraction
+- Admin token-based secure service-to-service communication
 
 # Features
 
-- Redis caching
-- Liquibase migrations
-- JPA auditing
-- Specifications filtering
-- Validation
-- Exception handling
-- Unit tests
-- Integration tests with Testcontainers
-- Docker support
-- CI Pipeline with GitHub Actions
-
----
-
-# Database
-
-## Tables
-
-### users_credentials
-
-| Column   | Type                |
-| -------- | ------------------- |
-| id       | bigint (PK)         |
-| login    | varchar(255) unique |
-| email    | varchar(255)        |
-| password | varchar(255)        |
-| role     | varchar(50)         |
-| active   | boolean             |
+- Reactive orchestration of multiple services
+- Cross-service registration consistency
+- Compensation logic (rollback on failure)
+- Structured error handling per service
+- Duplicate email detection (HTTP + message-based)
+- Service-to-service authentication
+- Clean separation of auth and user creation logic
+- Centralized mapping of external errors to domain exceptions
 
 ---
 
@@ -66,6 +45,8 @@ Supports registration, login, refresh token flow, and token validation.
 - Java 21
 - Maven
 - Docker Desktop
+- Running auth-service
+- Running user-service
 
 ---
 
@@ -75,12 +56,16 @@ Supports registration, login, refresh token flow, and token validation.
 
 ```bash
 git clone <repository-url>
-cd authservice
+cd gateway-service
 ```
 
-## 2. Start PostgreSQL
+## 2. Configure environment
 
-docker compose up -d postgres
+Set JWT secret:
+
+```bash
+export JWT_SECRET=your-secret
+```
 
 ## Run application
 
@@ -88,7 +73,7 @@ mvn spring-boot:run
 
 Application will start on:
 
-http://localhost:8081
+http://localhost:8083
 
 # Run With Docker
 
@@ -98,7 +83,7 @@ mvn clean package
 
 ## Build Docker image
 
-docker build -t authservice .
+docker build -t gateway-service .
 
 ## Start containers
 
@@ -106,40 +91,27 @@ docker compose up --build
 
 --- 
 
-# Authentication Flow
+# API
 
-1. Register
-   POST /auth/register
+1. Register User
+   POST api//auth/register
    {
-   "login": "user1",
-   "password": "1234",
-   "email": "user@test.com",
+   "login": "user3",
+   "password": "123456",
+   "email": "user3@test.com",
    "name": "John",
-   "surname": "Doe"
+   "surname": "Doe",
+   "birthDate": "2000-01-01"
    }
 
 2. Login
-   POST /auth/login
+   POST api/auth/login
 
    Response:
 
    {
    "accessToken": "jwt_access_token",
    "refreshToken": "jwt_refresh_token"
-   }
-
-3. Refresh token
-   POST /auth/refresh
-   {
-   "refreshToken": "jwt_refresh_token"
-   }
-
-4. Validate token
-   GET /auth/validate
-   Authorization: Bearer <accessToken>
-
-   {
-   "token": "jwt_refresh_token"
    }
 
 ---

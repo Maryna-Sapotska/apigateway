@@ -1,30 +1,38 @@
+server:
+  port: 8083
+
 spring:
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/orders-db}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    open-in-view: false
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: authservice
+              uri: http://auth-service:8081
+              predicates:
+                - Path=/api/auth/**
 
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    clear-check-sums: true
+            - id: userservice
+              uri: http://user-service:8080
+              predicates:
+                - Path=/users/**
+
+gateway:
+    service-user:
+      login: admin
+      password: admin
+
 
 jwt:
   secret: ${JWT_SECRET:bXktc3VwZXItc2VjcmV0LWtleS1teS1zdXBlci1zZWNyZXQta2V5LTEyMzQ=}
 
-server:
-  port: 8082
-
-services:
-  users-service:
-    url: http://users-service:8080
-
-logging:
-  level:
-    root: INFO
-    org.springframework: INFO
+#services:
+#  users-service:
+#    url: http://users-service:8080
+#
+#
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework: INFO
