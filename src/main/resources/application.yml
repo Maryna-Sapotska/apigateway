@@ -1,0 +1,28 @@
+server:
+  port: 8083
+
+spring:
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: authservice
+              uri: http://auth-service:8081
+              predicates:
+                - Path=/api/auth/**
+
+            - id: userservice
+              uri: http://user-service:8080
+              predicates:
+                - Path=/users/**
+
+gateway:
+    service-user:
+      login: admin
+      password: admin
+
+
+jwt:
+  secret: ${JWT_SECRET}
