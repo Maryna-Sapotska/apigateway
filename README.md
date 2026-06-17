@@ -1,13 +1,13 @@
 # Gateway Service
 
-A gateway service responsible for user registration and coordination between auth-service and user-service.
+API Gateway built with Spring Cloud Gateway and WebFlux.
 
 ## Tech Stack
 
 - Java 21
 - Spring Boot 3 (WebFlux)
+- Spring Cloud Gateway
 - Spring Security
-- Spring WebClient
 - Project Reactor
 - JSON Web Token (JJWT)
 - Docker
@@ -16,27 +16,41 @@ A gateway service responsible for user registration and coordination between aut
 
 ---
 
+## Responsibilities
+
+The gateway is responsible for:
+
+- Request routing
+- JWT validation
+- Authentication filtering
+- Forwarding user information to downstream services via headers
+- Centralized entry point for all microservices
+
 ## Features
-- Distributed user registration across services
-- Integration with auth-service and user-service
-- JWT-based authentication flow
-- Reactive non-blocking pipeline (WebFlux + Mono)
-- Centralized error handling via onStatus
-- Rollback mechanism for consistency
-- Email conflict detection (409 CONFLICT handling)
-- JWT parsing and userId extraction
-- Admin token-based secure service-to-service communication
 
-# Features
+- Route forwarding to microservices
+- JWT authentication filter
+- Public endpoints configuration
+- User identity propagation using request headers
+- Reactive non-blocking processing with WebFlux
+- Dockerized deployment
 
-- Reactive orchestration of multiple services
-- Cross-service registration consistency
-- Compensation logic (rollback on failure)
-- Structured error handling per service
-- Duplicate email detection (HTTP + message-based)
-- Service-to-service authentication
-- Clean separation of auth and user creation logic
-- Centralized mapping of external errors to domain exceptions
+---
+
+## Security
+
+All endpoints require a valid JWT token except:
+
+- /api/auth/login
+- /api/auth/register
+- /actuator/**
+
+After successful validation, the gateway forwards:
+
+- X-User-Id
+- X-User-Roles
+
+to downstream services.
 
 ---
 
@@ -45,8 +59,19 @@ A gateway service responsible for user registration and coordination between aut
 - Java 21
 - Maven
 - Docker Desktop
-- Running auth-service
-- Running user-service
+
+---
+
+# Environment Variables
+
+Required variables:
+
+JWT_SECRET=your-secret-key
+
+The same secret must be configured in:
+
+- API Gateway
+- Authentication Service
 
 ---
 
@@ -91,42 +116,21 @@ docker compose up --build
 
 --- 
 
-# API
+# Routes
 
-1. Register User
-   POST api//auth/register
-   {
-   "login": "user3",
-   "password": "123456",
-   "email": "user3@test.com",
-   "name": "John",
-   "surname": "Doe",
-   "birthDate": "2000-01-01"
-   }
+1. Authentication Service
+   /api/auth/**
 
-2. Login
-   POST api/auth/login
+Forwarded to:
 
-   Response:
+http://auth-service:8081
 
-   {
-   "accessToken": "jwt_access_token",
-   "refreshToken": "jwt_refresh_token"
-   }
+2. User Service
+   /users/**
 
----
+Forwarded to:
 
-# CI Pipeline
-
-GitHub Actions pipeline includes:
-
-- Build
-- SonarQube analysis
-- Docker image build
-
-Pipeline configuration located in:
-
-.github/workflows/ci.yml
+http://user-service:8080
 
 ---
 
